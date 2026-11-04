@@ -40,7 +40,7 @@ async function mbsRefreshAdmin(){
     mbsDb.from('order_items').select('*')
   ]);
   for(const r of [cr,pr,or,ir]) if(r.error) throw r.error;
-  mbsCategoryRows=cr.data||[]; categories=mbsCategoryRows.map(x=>x.name);
+  mbsCategoryRows=cr.data||[]; categories=mbsCategoryRows.map(x=>x.name); mbsCategoryImages=Object.fromEntries(mbsCategoryRows.map(x=>[x.name,x.image_url||'']));
   products=(pr.data||[]).map(mbsToProduct);
   orders=(or.data||[]).map(o=>({...o,code:o.order_code,name:o.customer_name,phone:o.phone,total:Number(o.total),date:new Date(o.created_at).toLocaleString('bn-BD'),items:(ir.data||[]).filter(i=>i.order_id===o.id)}));
   render();
