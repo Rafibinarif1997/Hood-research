@@ -8,6 +8,18 @@ let mbsSession = null;
 let mbsCategoryRows = [];
 let mbsCategoryImages = {};
 let mbsRemoteReady = false;
+let mbsDirectOrderItem = null;
+function mbsBuyNow(id){
+ const p=products.find(x=>String(x.id)===String(id));if(!p)return toast('পণ্য পাওয়া যায়নি');
+ const size=document.getElementById('pickSize')?.value||'',color=document.getElementById('pickColor')?.value||'',qty=Number(document.getElementById('pickQty')?.value||1);
+ if(p.sizes&&!size)return toast('সাইজ নির্বাচন করুন');
+ if(p.colors&&!color)return toast('কালার নির্বাচন করুন');
+ if(!Number.isInteger(qty)||qty<1)return toast('সঠিক পরিমাণ লিখুন');
+ if(qty>Number(p.stock))return toast('স্টকে পর্যাপ্ত পণ্য নেই');
+ mbsDirectOrderItem={...p,key:[String(p.id),size,color].join('|'),size,color,qty};
+ location.hash='checkout';render();
+}
+
 const mbsEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const mbsSizes = v => Array.isArray(v) ? v.join(', ') : (v || '');
 const mbsToProduct = p => ({id:p.id,name:p.name,cat:mbsCategoryRows.find(c=>c.id===p.category_id)?.name || 'অন্যান্য',category_id:p.category_id,price:Number(p.price),old:Number(p.old_price||0),stock:p.stock,sizes:mbsSizes(p.sizes),colors:mbsSizes(p.colors),desc:p.description||'',emoji:p.emoji||'🧸',image1:p.image1||'',image2:p.image2||'',image3:p.image3||''});
@@ -73,22 +85,23 @@ function render(){
     adminTab('products');return;
   }
   const oldHash=location.hash;
-  window.__mbsOldRender();
+  if(page==='checkout'&&mbsDirectOrderItem){const savedCart=cart;try{cart=[mbsDirectOrderItem];window.__mbsOldRender()}finally{cart=savedCart;$('#count').textContent=cart.reduce((s,x)=>s+x.qty,0)}}else window.__mbsOldRender();
   if(page==='checkout' && $('#order')) $('#order').onsubmit=mbsPlaceOrder;
   if(page==='track' && $('#track')) $('#track').onsubmit=mbsTrackOrder;
 }
 window.__mbsOldRender=renderLegacy;
 async function mbsPlaceOrder(e){
   e.preventDefault();
-  if(!cart.length)return;
+  const checkoutItems=mbsDirectOrderItem?[mbsDirectOrderItem]:cart;
+  if(!checkoutItems.length)return;
   const f=Object.fromEntries(new FormData(e.target));
   const code='MBS'+Date.now().toString().slice(-8);
-  const payload={p_order_code:code,p_customer_name:f.name,p_phone:f.phone,p_district:f.district,p_upazila:f.upazila,p_address:f.address,p_items:cart.map(x=>({product_id:x.id,quantity:x.qty,selected_size:x.size||'',selected_color:x.color||''}))};
+  const payload={p_order_code:code,p_customer_name:f.name,p_phone:f.phone,p_district:f.district,p_upazila:f.upazila,p_address:f.address,p_items:checkoutItems.map(x=>({product_id:x.id,quantity:x.qty,selected_size:x.size||'',selected_color:x.color||''}))};
   const b=e.target.querySelector('button');b.disabled=true;b.textContent='অর্ডার পাঠানো হচ্ছে...';
   const {data,error}=await mbsDb.rpc('place_cod_order',payload);
-  b.disabled=false;b.textContent='অর্ডার কনফার্ম করুন — '+money(cart.reduce((s,x)=>s+x.price*x.qty,0));
+  b.disabled=false;b.textContent='অর্ডার কনফার্ম করুন — '+money(checkoutItems.reduce((s,x)=>s+x.price*x.qty,0));
   if(error){toast('অর্ডার হয়নি: '+error.message);return}
-  cart=[];save('mbs_cart',cart);location.hash='success/'+code;
+  if(mbsDirectOrderItem){mbsDirectOrderItem=null}else{cart=[];save('mbs_cart',cart)}location.hash='success/'+code;
 }
 async function mbsTrackOrder(e){
   e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
