@@ -16,7 +16,17 @@ async function mbsLoadPublic(){
     mbsDb.from('products').select('*').eq('active',true).order('created_at',{ascending:false})
   ]);
   if(cr.error) throw cr.error; if(pr.error) throw pr.error;
-  mbsCategoryRows=cr.data||[]; categories=mbsCategoryRows.map(x=>x.name);
+  mbsCategoryRows=cr.data||[];
+  // First-time setup: create starter categories if the database has none.
+  if(mbsCategoryRows.length===0){
+    const starter=[{name:'বেবি পোশাক',emoji:'👶'},{name:'খেলনা',emoji:'🧸'},{name:'ফিডিং',emoji:'🍼'},{name:'বেবি কেয়ার',emoji:'🧴'},{name:'বেবি বেডিং',emoji:'🛏️'},{name:'নার্সারি',emoji:'🧺'}];
+    const seeded=await mbsDb.from('categories').insert(starter);
+    if(seeded.error) throw seeded.error;
+    const refreshed=await mbsDb.from('categories').select('*').order('name');
+    if(refreshed.error) throw refreshed.error;
+    mbsCategoryRows=refreshed.data||[];
+  }
+  categories=mbsCategoryRows.map(x=>x.name);
   products=(pr.data||[]).map(mbsToProduct);
   mbsRemoteReady=true;
   render();
