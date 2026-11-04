@@ -22,6 +22,9 @@ function mbsBuyNow(id){
 
 const mbsEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const mbsSizes = v => Array.isArray(v) ? v.join(', ') : (v || '');
+const MBS_CATEGORY_ART = {
+'বেবি পোশাক':'baby-clothes','নবজাতকের প্রয়োজনীয় পণ্য':'newborn-essentials','ডায়াপার ও ওয়াইপস':'diapers-wipes','ফিডিং ও breastfeeding':'feeding','বেবি ফুড ও সলিড ফুড':'baby-food','বেবি বাথ ও স্কিনকেয়ার':'bath-skincare','স্বাস্থ্য ও নিরাপত্তা':'health-safety','বেবি খেলনা':'baby-toys','শিক্ষামূলক খেলনা ও বই':'learning-books','বেবি বেডিং ও কমফোর্ট':'bedding','স্ট্রলার ও ট্রাভেল':'stroller-travel','বেবি ফার্নিচার ও নার্সারি':'furniture-nursery','বেবি জুতা ও মোজা':'shoes-socks','বেবি এক্সেসরিজ':'accessories','মা ও মাতৃত্বকালীন পণ্য':'maternity','গিফট সেট ও কম্বো':'gift-sets','বেবি তোয়ালে ও গোসলের সামগ্রী':'bath-supplies','বেবি কেয়ার ও ক্লিনিং':'cleaning-care'};
+const mbsCategoryImageMap = rows => Object.fromEntries(rows.map(c=>[c.name,c.image_url||('./category-art/'+(MBS_CATEGORY_ART[c.name]||'baby-toys')+'.svg')]));
 const mbsToProduct = p => ({id:p.id,name:p.name,cat:mbsCategoryRows.find(c=>c.id===p.category_id)?.name || 'অন্যান্য',category_id:p.category_id,price:Number(p.price),old:Number(p.old_price||0),stock:p.stock,sizes:mbsSizes(p.sizes),colors:mbsSizes(p.colors),desc:p.description||'',emoji:p.emoji||'🧸',image1:p.image1||'',image2:p.image2||'',image3:p.image3||''});
 async function mbsLoadPublic(){
   const [cr,pr] = await Promise.all([
@@ -39,7 +42,7 @@ async function mbsLoadPublic(){
     if(refreshed.error) throw refreshed.error;
     mbsCategoryRows=refreshed.data||[];
   }
-  categories=mbsCategoryRows.map(x=>x.name); mbsCategoryImages=Object.fromEntries(mbsCategoryRows.map(x=>[x.name,x.image_url||'']));
+  categories=mbsCategoryRows.map(x=>x.name); mbsCategoryImages=mbsCategoryImageMap(mbsCategoryRows);
   products=(pr.data||[]).map(mbsToProduct);
   mbsRemoteReady=true;
   render();
