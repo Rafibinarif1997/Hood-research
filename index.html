@@ -18,7 +18,7 @@ const seed=[{id:1,name:'Soft Cloud Baby Blanket',cat:'বেবি বেডি�
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));let products=read('mbs_products',seed),cart=read('mbs_cart',[]),orders=read('mbs_orders',[]);let categories=read('mbs_categories',[...new Set(products.map(p=>p.cat).filter(Boolean))]);products.forEach(p=>{if(p.cat&&!categories.includes(p.cat))categories.push(p.cat)});save('mbs_categories',categories);
 const money=n=>'৳'+Number(n).toLocaleString('en-BD'),$=s=>document.querySelector(s);
 function productImages(p){return [p.image1||p.image||'',p.image2||'',p.image3||'']}
-function imageSlots(p){const imgs=productImages(p).filter(Boolean);return imgs.length?imgs.map((src,i)=>'<button type="button" class="gallery-thumb" onclick="openProductImage('+JSON.stringify(src).replace(/</g,'\\u003c')+')" aria-label="ছবি '+(i+1)+' বড় করে দেখুন"><img src="'+src+'" alt="'+p.name+' - ছবি '+(i+1)+'"></button>').join(''):'<div class="thumb-placeholder">'+(p.emoji||'🧸')+'</div>'}
+function imageSlots(p){const imgs=productImages(p).filter(Boolean);return imgs.length?imgs.map((src,i)=>'<button type="button" class="gallery-thumb" aria-label="ছবি '+(i+1)+' বড় করে দেখুন"><img src="'+src+'" alt="'+p.name+' - ছবি '+(i+1)+'"></button>').join(''):'<div class="thumb-placeholder">'+(p.emoji||'🧸')+'</div>'}
 function primaryProductImage(p){const src=productImages(p).find(Boolean);return src?'<img src="'+src+'" alt="'+p.name+'" class="primary-product-image">':'<div class="primary-product-placeholder">'+(p.emoji||'🧸')+'</div>'}
 function card(p){return '<article class="card"><a href="#product/'+p.id+'"><div class="photo"><span class="tag">'+p.cat+'</span>'+primaryProductImage(p)+'</div></a><div class="body"><h3>'+p.name+'</h3><span class="price">'+money(p.price)+'</span>'+(p.old?'<span class="old">'+money(p.old)+'</span>':'')+'<div class="foot"><small>স্টক '+p.stock+'</small><button class="add" onclick="'+((p.sizes||p.colors)?"location.hash='#product/"+encodeURIComponent(String(p.id))+"'":"add(\\'"+String(p.id)+"\\')")+'">+</button></div></div></article>'}
 function renderLegacy(){let [page,id]=((location.hash.slice(1)||'home').split('/'));$('#count').textContent=cart.reduce((s,x)=>s+x.qty,0);let a=$('#app');
@@ -48,6 +48,7 @@ function del(id){if(confirm('পণ্য মুছবেন?')){products=produc
 function status(i,s){orders[i].status=s;save('mbs_orders',orders);toast('স্ট্যাটাস আপডেট হয়েছে')}
 
 
+document.addEventListener('click',function(e){const thumb=e.target.closest('.gallery-thumb');if(thumb){const img=thumb.querySelector('img');if(img)openProductImage(img.currentSrc||img.src)}});
 function openProductImage(src){
  let zoom=1;
  const old=document.getElementById('productLightbox');if(old)old.remove();
