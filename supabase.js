@@ -66,7 +66,7 @@ function render(){
   if(page==='checkout' && $('#order')) $('#order').onsubmit=mbsPlaceOrder;
   if(page==='track' && $('#track')) $('#track').onsubmit=mbsTrackOrder;
 }
-window.__mbsOldRender=window.__mbsOldRender||render;
+window.__mbsOldRender=renderLegacy;
 async function mbsPlaceOrder(e){
   e.preventDefault();
   if(!cart.length)return;
