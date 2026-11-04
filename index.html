@@ -7,7 +7,7 @@ const money=n=>'৳'+Number(n).toLocaleString('en-BD'),$=s=>document.querySelect
 function productImages(p){return [p.image1||p.image||'',p.image2||'',p.image3||'']}
 function imageSlots(p){return productImages(p).map(src=>src?'<img src="'+src+'" alt="'+p.name+'">':'<div class="thumb-placeholder">'+(p.emoji||'🧸')+'</div>').join('')}
 function card(p){return '<article class="card"><a href="#product/'+p.id+'"><div class="photo"><span class="tag">'+p.cat+'</span><div class="product-thumbs">'+imageSlots(p)+'</div></div></a><div class="body"><h3>'+p.name+'</h3><span class="price">'+money(p.price)+'</span>'+(p.old?'<span class="old">'+money(p.old)+'</span>':'')+'<div class="foot"><small>স্টক '+p.stock+'</small><button class="add" onclick="add('+p.id+')">+</button></div></div></article>'}
-function render(){let [page,id]=((location.hash.slice(1)||'home').split('/'));$('#count').textContent=cart.reduce((s,x)=>s+x.qty,0);let a=$('#app');
+function renderLegacy(){let [page,id]=((location.hash.slice(1)||'home').split('/'));$('#count').textContent=cart.reduce((s,x)=>s+x.qty,0);let a=$('#app');
 if(page==='home')a.innerHTML='<div class="wrap"><section class="hero"><div><small style="color:#b85f78">LITTLE THINGS, BIG LOVE</small><h1>আপনার সোনামণির জন্য একটু বেশি যত্ন</h1><p>আরাম, আনন্দ আর ভালোবাসায় ভরা বেবি পণ্যের সুন্দর সংগ্রহ।</p><a class="btn primary" href="#shop">এখনই শপিং করুন →</a></div><div class="art">🧸</div></section><div class="head"><div><h2>ক্যাটাগরি</h2><p class="muted">প্রয়োজনীয় সবকিছু এক জায়গায়</p></div></div><div class="cats">'+categories.map((x,i)=>'<a class="cat" href="#category/'+encodeURIComponent(x)+'"><span>🧸</span><br>'+x+'</a>').join('')+'</div><div class="head"><h2>জনপ্রিয় পণ্য</h2><a href="#shop">সব পণ্য →</a></div><div class="grid">'+products.slice(0,4).map(card).join('')+'</div><div class="banner"><div><h2>সোনামণির জন্য ভালোবাসার উপহার</h2><p>সহজ অর্ডার • ক্যাশ অন ডেলিভারি</p></div><a class="btn primary" href="#shop">পণ্য দেখুন</a></div></div>';
 else if(page==='category'){let cat=decodeURIComponent(id||'');a.innerHTML='<div class="wrap"><h1 class="title">'+cat+'</h1><p><a href="#shop">← সব পণ্য</a></p><div class="grid">'+products.filter(p=>p.cat===cat).map(card).join('')+'</div></div>'}
 else if(page==='shop')a.innerHTML='<div class="wrap"><h1 class="title">Shop All Products</h1><p class="muted">সোনামণির জন্য পছন্দের পণ্য বেছে নিন।</p><input id="search" class="field" style="max-width:340px" placeholder="পণ্য খুঁজুন..."><div id="list" class="grid">'+products.map(card).join('')+'</div></div>';
@@ -31,5 +31,5 @@ function renameCategory(i){let old=categories[i],n=prompt('নতুন না�
 function deleteCategory(i){let name=categories[i];if(products.some(p=>p.cat===name)){toast('এই ক্যাটাগরিতে পণ্য আছে; আগে পণ্য অন্য ক্যাটাগরিতে দিন');return}if(confirm('ক্যাটাগরি মুছবেন?')){categories.splice(i,1);save('mbs_categories',categories);adminTab('categories')}}
 function del(id){if(confirm('পণ্য মুছবেন?')){products=products.filter(p=>p.id!==id);save('mbs_products',products);render()}}
 function status(i,s){orders[i].status=s;save('mbs_orders',orders);toast('স্ট্যাটাস আপডেট হয়েছে')}
-window.addEventListener('hashchange',render);render();
-</script></body></html>
+
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./supabase.js"></script></body></html>
