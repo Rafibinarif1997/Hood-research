@@ -120,19 +120,26 @@ async function mbsDeleteCat(id){
   const cat=mbsCategoryRows.find(x=>x.id===id);if(!cat)return;
   const {data:linked,error:readError}=await mbsDb.from('products').select('id').eq('category_id',id);
   if(readError){toast('পণ্যের তালিকা দেখা যায়নি: '+readError.message);return}
-  let targetId=null;
   if(linked&&linked.length){
     const alternatives=mbsCategoryRows.filter(x=>x.id!==id);
-    if(!alternatives.length){toast('এটাই শেষ ক্যাটাগরি। আগে আরেকটি ক্যাটাগরি যোগ করুন।');return}
     const choices=alternatives.map((x,i)=>(i+1)+'. '+x.name).join('\\n');
-    const answer=prompt('এই ক্যাটাগরিতে '+linked.length+'টি পণ্য আছে। মুছে ফেলার আগে পণ্যগুলো কোন ক্যাটাগরিতে সরাবেন?\\n\\n'+choices+'\\n\\nনম্বর লিখুন:');
-    if(answer===null)return;
-    const n=Number(answer);
-    if(!Number.isInteger(n)||n<1||n>alternatives.length){toast('সঠিক ক্যাটাগরি নম্বর দিন');return}
-    targetId=alternatives[n-1].id;
-    if(!confirm(linked.length+'টি পণ্য "'+alternatives[n-1].name+'" ক্যাটাগরিতে সরিয়ে "'+cat.name+'" মুছে ফেলবেন?'))return;
-    const {error:moveError}=await mbsDb.from('products').update({category_id:targetId}).eq('category_id',id);
-    if(moveError){toast('পণ্য সরানো যায়নি: '+moveError.message);return}
+    const action=prompt('এই ক্যাটাগরিতে '+linked.length+'টি পণ্য আছে। কী করতে চান?\\n\\n1 = পণ্য অন্য ক্যাটাগরিতে সরিয়ে ক্যাটাগরি মুছুন\\n2 = এই ক্যাটাগরির সব পণ্য মুছে ক্যাটাগরি মুছুন\\n0 = বাতিল করুন');
+    if(action===null||action.trim()==='0')return;
+    if(action.trim()==='1'){
+      if(!alternatives.length){toast('অন্য ক্যাটাগরি নেই। আগে নতুন ক্যাটাগরি যোগ করুন।');return}
+      const answer=prompt('কোন ক্যাটাগরিতে পণ্যগুলো সরাবেন?\\n'+choices+'\\nনম্বর লিখুন:');
+      if(answer===null)return;
+      const n=Number(answer);
+      if(!Number.isInteger(n)||n<1||n>alternatives.length){toast('সঠিক ক্যাটাগরি নম্বর দিন');return}
+      const target=alternatives[n-1];
+      if(!confirm(linked.length+'টি পণ্য "'+target.name+'" ক্যাটাগরিতে সরিয়ে "'+cat.name+'" মুছবেন?'))return;
+      const {error:moveError}=await mbsDb.from('products').update({category_id:target.id}).eq('category_id',id);
+      if(moveError){toast('পণ্য সরানো যায়নি: '+moveError.message);return}
+    }else if(action.trim()==='2'){
+      if(!confirm('সতর্কতা: "'+cat.name+'" ক্যাটাগরির '+linked.length+'টি পণ্য স্থায়ীভাবে মুছে যাবে। পুরোনো অর্ডারের তথ্য থাকবে। নিশ্চিত?'))return;
+      const {error:deleteProductsError}=await mbsDb.from('products').delete().eq('category_id',id);
+      if(deleteProductsError){toast('পণ্য মুছতে পারেনি: '+deleteProductsError.message);return}
+    }else{toast('১, ২ অথবা ০ লিখুন');return}
   }else if(!confirm('"'+cat.name+'" ক্যাটাগরিটি মুছে ফেলবেন?'))return;
   const {error}=await mbsDb.from('categories').delete().eq('id',id);
   if(error){toast('ক্যাটাগরি মুছতে পারেনি: '+error.message);return}
