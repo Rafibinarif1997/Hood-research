@@ -119,3 +119,6 @@ async function mbsEditProduct(id){
 async function mbsSetOrderStatus(id,status){const {error}=await mbsDb.from('orders').update({status}).eq('id',id);if(error){toast(error.message);return}await mbsRefreshAdmin();adminTab('orders')}
 mbsDb.auth.getSession().then(async ({data})=>{mbsSession=data.session;if(mbsSession?.user?.email?.toLowerCase()!==MBS_ADMIN_EMAIL){await mbsDb.auth.signOut();mbsSession=null}try{await mbsLoadPublic()}catch(err){console.error(err);toast('Supabase ডেটা লোড হয়নি: '+err.message);render()}if(location.hash==='#admin'&&mbsSession)await mbsRefreshAdmin()});
 mbsDb.auth.onAuthStateChange((_event,session)=>{mbsSession=session;if(location.hash==='#admin')render()});
+// Re-render the correct page whenever a customer clicks an in-site hash link.
+// Without this listener, the URL changes but the visible page stays unchanged until refresh.
+window.addEventListener('hashchange',()=>{render();});
